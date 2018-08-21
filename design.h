@@ -12,7 +12,7 @@
 #define		CAR		0
 
 
-/*Îó²îÏû³ı*/
+/*è¯¯å·®æ¶ˆé™¤*/
 #if CAR	
 #define ADJUST_PAUSE	2
 #else
@@ -82,7 +82,7 @@
 
 
 /*!
-* @brief:  (È«¾ÖÎ¬»¤)
+* @brief:  (å…¨å±€ç»´æŠ¤)
 */
 extern u32	IsNewPosition;
 extern u32 currentPosition;
@@ -96,9 +96,9 @@ extern void CAK(void);
 void toFwd(void);
 void toBack(void);
 extern void toStop(void);
-//½«µ±Ç°×ø±ê±£´æÖÁeepromÖĞ
+//å°†å½“å‰åæ ‡ä¿å­˜è‡³eepromä¸­
 extern void savePosition(void);
-//´ÓeepromÖĞÌáÈ¡×ø±ê
+//ä»eepromä¸­æå–åæ ‡
 extern u32 getPositionInMemory(void);
 extern void toOrign(void);
 extern void changeSpeed(void);

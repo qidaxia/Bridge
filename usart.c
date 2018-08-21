@@ -55,7 +55,7 @@ extern void sendCMD(u8 *buf, u8 len)
 }
 
 
-//Ñ°ÕÒÃüÁîÍ·£¬Ê§°Ü·µ»Ø0xff,³É¹¦·µ»Ø¶ÔÓ¦µÄË÷Òı£¨sËùÔÚµÄË÷Òı£©
+//å¯»æ‰¾å‘½ä»¤å¤´ï¼Œå¤±è´¥è¿”å›0xff,æˆåŠŸè¿”å›å¯¹åº”çš„ç´¢å¼•ï¼ˆsæ‰€åœ¨çš„ç´¢å¼•ï¼‰
 static u8 searchCMDHead(u8 len)
 {
 	u8 i = 0;
@@ -73,36 +73,36 @@ static u8 searchCMDHead(u8 len)
 
 
 /*!
-* @brief:  Êı¾İ½ÓÊÕÍê³ÉÖ´ĞĞ£¬
+* @brief:  æ•°æ®æ¥æ”¶å®Œæˆæ‰§è¡Œï¼Œ
 */
 extern void handlerFrame(void)
 {
 	u8 len = getReciveLen();
 	u8 headIndex = 0xff;
-	if (len < 9)//Êı¾İ²»ÍêÕû
+	if (len < 9)//æ•°æ®ä¸å®Œæ•´
 	{
 		return;
 	}
-	if (len > 20)//´íÎóÊı¾İ
+	if (len > 20)//é”™è¯¯æ•°æ®
 	{
 		reciveLen = 0;
 		return;
 	}
-	//ÑéÖ¤ÃüÁîÎ²
+	//éªŒè¯å‘½ä»¤å°¾
 	if (reciveBuff[len - 1] == 'd'&&reciveBuff[len - 2] == 'n'&&reciveBuff[len - 3] == 'e')
 	{
-		//Ñ°ÕÒÃüÁîÍ·
+		//å¯»æ‰¾å‘½ä»¤å¤´
 		headIndex = searchCMDHead(len);
-		if (headIndex != 0xff)//ÕÒµ½ÁË
+		if (headIndex != 0xff)//æ‰¾åˆ°äº†
 		{
 			switch (reciveBuff[headIndex + 5])
 			{
-			case 0x01://µç»ú¿ØÖÆ£¨Ò»Ö±ÔËĞĞ£©
+			case 0x01://ç”µæœºæ§åˆ¶ï¼ˆä¸€ç›´è¿è¡Œï¼‰
 				serialParams.direction = (EnumDir)reciveBuff[headIndex + 6];
 				cmdFlag.flag_run = TRUE;
 				break;
-			case 0x11://ÔË¶¯µ½Ö¸¶¨µÄ×ø±ê,6,7,8,9(Ğ£Ñé)
-				if (len < 13 || ((len > headIndex) && (len - headIndex < 13)))//¶ªÖ¡
+			case 0x11://è¿åŠ¨åˆ°æŒ‡å®šçš„åæ ‡,6,7,8,9(æ ¡éªŒ)
+				if (len < 13 || ((len > headIndex) && (len - headIndex < 13)))//ä¸¢å¸§
 				{
 					NAK();
 				}
@@ -112,41 +112,41 @@ extern void handlerFrame(void)
 				}
 				else
 				{
-					//Îª±ÜÃâ´íÎó£¬Èı×Ö½Ú£¬×î¸ßÎ»¼ÓÒ»´«Êä
+					//ä¸ºé¿å…é”™è¯¯ï¼Œä¸‰å­—èŠ‚ï¼Œæœ€é«˜ä½åŠ ä¸€ä¼ è¾“
 					serialParams.targetPosition = reciveBuff[headIndex + 6] - 1; serialParams.targetPosition <<= 8;
 					serialParams.targetPosition = serialParams.targetPosition + reciveBuff[headIndex + 7]; serialParams.targetPosition <<= 8;
 					serialParams.targetPosition = serialParams.targetPosition + reciveBuff[headIndex + 8];
 					cmdFlag.flag_runWithTar = TRUE;
 				}
 				break;
-			case 0x02://»Ø¹éÔ­µã
+			case 0x02://å›å½’åŸç‚¹
 				cmdFlag.flag_toOrign = TRUE;
 				break;
-			case 0x03://ÉÏ±¨×´Ì¬
+			case 0x03://ä¸ŠæŠ¥çŠ¶æ€
 				cmdFlag.flag_reportState = TRUE;
 				break;
-			case 0x04://·¢ËÍÂö³å
+			case 0x04://å‘é€è„‰å†²
 				serialParams.pulseStyle = (EnumPulseStyle)reciveBuff[headIndex + 6];
 				cmdFlag.flag_sendPul = TRUE;
 				break;
-			case 0x06://ÇĞ»»ËÙ¶È
+			case 0x06://åˆ‡æ¢é€Ÿåº¦
 				serialParams.speedType = (EnumSpeed)reciveBuff[headIndex + 6];
 				cmdFlag.flag_speedChange = TRUE;
 				break;
-			case 0x07://Í£Ö¹Âö³å
+			case 0x07://åœæ­¢è„‰å†²
 				cmdFlag.flag_stopPul = TRUE;
 				break;
-			case 0x08://(µ÷ÊÔ£¬ÉÏ±¨Ä¿±êµØÖ·)
+			case 0x08://(è°ƒè¯•ï¼Œä¸ŠæŠ¥ç›®æ ‡åœ°å€)
 				reportTarget();
 			default:
 				break;
 			}
 
 		}
-		//Êı¾İ²»ÍêÕû£¬»ò´¦ÀíÍê³É£¬ÔòÖØĞÂ¿ªÊ¼½ÓÊÕ
+		//æ•°æ®ä¸å®Œæ•´ï¼Œæˆ–å¤„ç†å®Œæˆï¼Œåˆ™é‡æ–°å¼€å§‹æ¥æ”¶
 		clearReciveBuf();
 	}
-	else//ÑéÖ¤ÃüÁîÎ²²»Í¨¹ı£¬ÖØĞÂ½ÓÊÕ
+	else//éªŒè¯å‘½ä»¤å°¾ä¸é€šè¿‡ï¼Œé‡æ–°æ¥æ”¶
 	{
 		clearReciveBuf();
 	}

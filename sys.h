@@ -56,12 +56,12 @@ typedef struct
 
 
 
-//�ڲ�1M����:��˿λ E1 D9 FF
-//�ⲿ8M����:��˿λ FF D9 FF
+//内部1M晶振:熔丝位 E1 D9 FF
+//外部8M晶振:熔丝位 FF D9 FF
 #define  mclk   8000000
 
 /*
-ȡ��JTAGEN
+取消JTAGEN
 MCUCSR |= 1 << JTD;
 MCUCSR |= 1 << JTD;
 */

@@ -4,15 +4,15 @@
 #pragma interrupt_handler encodeISR:2
 
 /*
-�����жϣ�
-��A��Ϊ�����ص�ʱ��
-B��ߵ�ƽ����ת������࿴����תCCW��
-B��͵�ƽ����ת������࿴����תCW��
+方向判断：
+当A相为上升沿的时候，
+B相高电平：反转（从轴侧看向左转CCW）
+B相低电平：正转（从轴侧看向右转CW）
 
 
-//ע��Ӳ��:
-����ǰ��ʱ����������ת
-С��ǰ��ʱ����������ת
+//注意硬件:
+大梁前进时，编码器正转
+小车前进时，编码器反转
 */
 
 
@@ -29,9 +29,9 @@ static void encodeISR(void)
 			currentPosition--;
 		}
 	}
-	else//���Ի��ֶ�����
+	else//惯性或手动控制
 	{
-		//С��
+		//小车
 #if CAR
 		if (PIND&BIT(IO_ENCODE_B))//forward
 		{
@@ -42,7 +42,7 @@ static void encodeISR(void)
 			currentPosition--;
 		}
 
-		//����
+		//大梁
 #else
 		if (PIND&BIT(IO_ENCODE_B))//back
 		{
@@ -59,7 +59,7 @@ static void encodeISR(void)
 	GIFR |= BIT(INTF0);
 }
 
-//int0,encode_A,�����ش���
+//int0,encode_A,上升沿触发
 extern void encodeInit(void)
 {
 	MCUCR = 0x03;

@@ -1,14 +1,14 @@
 #include "eeprom.h"
 void eepromWrite(u16 address, u8 dat)
 {
-	/*µÈ´ıÉÏÒ»´ÎĞ´²Ù×÷½áÊø*/
+	/*ç­‰å¾…ä¸Šä¸€æ¬¡å†™æ“ä½œç»“æŸ*/
 	while (EECR &BIT(EEWE));
-	/*ÉèÖÃµØÖ·ºÍÊı¾İ¼Ä´æÆ÷*/
+	/*è®¾ç½®åœ°å€å’Œæ•°æ®å¯„å­˜å™¨*/
 	EEAR = address;
 	EEDR = dat;
-	/*ÖÃÎ»EEMWE*/
+	/*ç½®ä½EEMWE*/
 	EECR |= BIT(EEMWE);
-	/*ÖÃÎ»EEWEÒÔÆô¶¯Ğ´²Ù×÷*/
+	/*ç½®ä½EEWEä»¥å¯åŠ¨å†™æ“ä½œ*/
 	SREG &= ~BIT(7);
 	EECR |= BIT(EEWE);
 	SREG |= BIT(7);
@@ -19,9 +19,9 @@ void eepromWrite(u16 address, u8 dat)
 u8 eepromRead(u16 address)
 {
 	while (EECR&BIT(EEWE));
-	/*ÉèÖÃµØÖ·¼Ä´æÆ÷*/
+	/*è®¾ç½®åœ°å€å¯„å­˜å™¨*/
 	EEAR = address;
-	/*ÉèÖÃEEREÒÔÆô¶¯¶Á²Ù×÷*/
+	/*è®¾ç½®EEREä»¥å¯åŠ¨è¯»æ“ä½œ*/
 	EECR |= BIT(EERE);
 	return EEDR;
 }

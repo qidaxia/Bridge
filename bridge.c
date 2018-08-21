@@ -6,26 +6,26 @@
  * @Contact: 1176201157@qq.com
  *
  * @brief:
- �޸���־��
- 2018/04/16 ���ӣ��յ�ָֹͣ��ͷ���������еı�־λ����ֹ���е�����
- 2018/04/20 �޸ģ��ڴ�����С���ϰ�װ�ı�����ת������ͬ��
-			����ǰ��ʱ����������ת
-			С��ǰ��ʱ����������ת
-			����ڱ������ж�ʱ���������������룬��ʶ���ڹ���״̬�»��ֶ�ģʽʱ�ļ�������
- 2018/04/22 �����̵����պ�ʱ϶��
-			���豸״̬���룬��Ϊָ��״̬��ʵʱ״̬��������ʶ��������ָ��״̬���ϱ�״̬ʱ�ϱ�ʵʱ״̬
-			ɾ�� k3�̵������루Ӳ����ֹͣ��Ϊk4�����ⲿ˫ͨ���̵���ʵ�֣�
+ 修改日志：
+ 2018/04/16 增加，收到停止指令头，清零所有的标志位，终止所有的任务
+ 2018/04/20 修改，在大梁和小车上安装的编码器转动方向不同，
+			大梁前进时，编码器正转
+			小车前进时，编码器反转
+			因此在编码器中断时，加入了条件编译，以识别在惯性状态下或手动模式时的计数错误
+ 2018/04/22 调整继电器闭合时隙，
+			将设备状态分离，分为指令状态，实时状态，编码器识别方向依托指令状态，上报状态时上报实时状态
+			删除 k3继电器代码（硬件将停止改为k4触发外部双通道继电器实现）
 
- key1:ǰ����λ
- key2:������λ
- key3:�ֶ�ǰ��
- key4:�ֶ�����
+ key1:前进限位
+ key2:后退限位
+ key3:手动前进
+ key4:手动后退
 
  *
  * @description:
  *
  * @note:
- ��˿λ��FE D1 FF
+ 熔丝位：FE D1 FF
 */
 
 #include "design.h"
@@ -37,23 +37,23 @@
 
 
 /*
-eeprom�洢��ǰλ��(512�ֽ�)��ÿ�ο���ʱ��ȡ
-0x0000:У��λ(���������Ч����Ϊ0x00,����Ϊ0xff)
-0x00FF:У��λ
-0x01FF:У��λ
+eeprom存储当前位置(512字节)，每次开机时读取
+0x0000:校验位(如果数据有效，则为0x00,否则为0xff)
+0x00FF:校验位
+0x01FF:校验位
 
-0x01:��λ
+0x01:高位
 0x02:
 0x03:
-0x04:��λ
+0x04:低位
 */
 
 int main(void)
 {
 	u8 oldLen = 0;
 	u32 oldIsNewPosition = 0;
-	u16 newPositionCnt = 0;//���ڸ���eeprom��ʱ
-	u8 i = 5;//���ڸ�λ����
+	u16 newPositionCnt = 0;//用于更新eeprom计时
+	u8 i = 5;//用于复位鸣笛
 	ioInit();
 
 	encodeInit();
@@ -62,7 +62,7 @@ int main(void)
 	wdtInit();
 	delay_ms(2000);
 	currentPosition = getPositionInMemory();
-	//��ϵͳ��λ��λʱ���Ϳ���������ʾ���ж�
+	//当系统复位复位时，就可以利用提示音判断
 	while (i--)
 	{
 		onceBeep();
@@ -74,7 +74,7 @@ int main(void)
 	{
 
 #if CAR==0
-		//�л��ٶ�
+		//切换速度
 		if (IsSpeedChange())
 		{
 			keyUp();
@@ -82,47 +82,47 @@ int main(void)
 			keyDown();
 		}
 #endif
-		//�˶�ָ��޾��������
+		//运动指令（无距离参数）
 		if (IsRun())
 		{
 			keyUp();
 			runHandler();
 			keyDown();
 		}
-		//�˶�ָ�ָ�����룩
+		//运动指令（指定距离）
 		if (IsRunWithTarget())
 		{
 			runHandlerWithTarget();
 		}
-		//��ԭ��
+		//归原点
 		if (IsToOrign())
 		{
 			keyUp();
 			toOrign();
 			keyDown();
 		}
-		//�ϱ�״̬
+		//上报状态
 		if (IsReportState())
 		{
 			keyUp();
 			ReportState();
 			keyDown();
 		}
-		//��������
+		//发送脉冲
 		if (IsSendPul())
 		{
 			keyUp();
 			enPulse();
 			keyDown();
 		}
-		//ֹͣ���壨�����ڸߵ�ƽ�����
+		//停止脉冲（仅用于高电平情况）
 		if (IsStopPul())
 		{
 			keyUp();
 			disPulse();
 			keyDown();
 		}
-		//��λ�����漰��ȫ����Ҫ�ϸߵ����ȼ���
+		//限位，（涉及安全，需要较高的优先级）
 		if (IsLimitForward())
 		{
 			if (deviceStatic == Forward || deviceStatic == Stop)
@@ -138,7 +138,7 @@ int main(void)
 				toStop();
 			}
 		}
-		//�ֶ�ģʽ
+		//手动模式
 		if (IsForwardByHuman())
 		{
 			keyUp();
@@ -151,7 +151,7 @@ int main(void)
 			humanToBack();
 			keyDown();
 		}
-		//------------------����������ݴ���
+		//------------------接收完成数据处理
 		if (getReciveLen() != 0 && oldLen == getReciveLen())
 		{
 #if EN_WDR==1
@@ -166,18 +166,18 @@ int main(void)
 			oldLen = getReciveLen();
 		}
 
-		//--------------�洢��ǰλ�ô���
+		//--------------存储当前位置处理
 		if (IsNewPosition != 0 && oldIsNewPosition == IsNewPosition)
 		{
 #if EN_WDR==1
 			_WDR();
 #endif
-			//��ʱ4.5���ӱ���30*150���˼�����豸�����ٶ��йأ�����̫��
+			//计时4.5秒钟保存30*150：此间隔与设备运行速度有关，不可太短
 			newPositionCnt++;
 			if (newPositionCnt >= 150)
 			{
-				savePosition();//������̰����ŷ���������;
-				IsNewPosition = 0;//�����ʶ�豸λ���Ƿ�ı�ı���
+				savePosition();//保存过程伴随着蜂鸣器提醒;
+				IsNewPosition = 0;//清零标识设备位置是否改变的变量
 				oldIsNewPosition = 0;
 				newPositionCnt = 0;
 			}
@@ -187,9 +187,9 @@ int main(void)
 			oldIsNewPosition = IsNewPosition;
 		}
 		//-------------------------
-		delay_ms(30);//��Ҫɾ������֤���ݿɿ�����
+		delay_ms(30);//不要删掉，保证数据可靠传输
 
-		//----------------------����˸����ʾ��������
+		//----------------------灯闪烁，提示程序运行
 		if ((PINA&BIT(IO_LED)) == 0)
 		{
 			LED_OFF;

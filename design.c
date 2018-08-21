@@ -6,23 +6,23 @@
 
 
 /*!
-* @brief:  ��λ�øı�ʱ����ֵ���ۼӣ����ڱ�ʶλ�õĸı�
-��0:δ���������������ˣ�������������
-�ڴ洢�굱ǰ����󣬽������㡣
+* @brief:  当位置改变时，其值会累加，用于标识位置的改变
+（0:未变更，其他：变更了，编码器处理）
+在存储完当前坐标后，将其清零。
 */
 u32	IsNewPosition = 0;
 
 
 /*!
-* @brief:  ��ǰ����λ��
+* @brief:  当前坐标位置
 */
 u32 currentPosition = 0;
 
 
 
 /*!
-* @brief:  ͨ�Ų�����ȫ��ά����
-* waring:serialParams.direction�ֶ�ֻ���� stopʱ���Żᱻ������ΪStop�����������ֻ����ָ��
+* @brief:  通信参数（全局维护）
+* waring:serialParams.direction字段只有在 stop时，才会被主动改为Stop，其余情况，只接受指令
 */
 PARAMETERS serialParams = {
 	0,			/*!< targetPosition  */
@@ -31,14 +31,14 @@ PARAMETERS serialParams = {
 	HighLevel	/*!< pulseStyle  */
 };
 
-//�豸��ʵʱ״̬
+//设备的实时状态
 EnumDir deviceStatic = Stop;
 
 
 
 
 /*!
-* @brief:  ͨ��״̬λ��ȫ��ά����
+* @brief:  通信状态位（全局维护）
 */
 FLAG cmdFlag = {
 	FALSE,	/*!< flag_run  */
@@ -108,13 +108,13 @@ static void clearAllFlag(void)
 }
 
 /*
-С����
-	K1,K2:����
-	K3,K4����Դ
-	K5��5V����
-������
-	K1,��ת
-	K2,��ת
+小车：
+	K1,K2:正反
+	K3,K4：电源
+	K5：5V脉冲
+大梁：
+	K1,正转
+	K2,反转
 */
 void toFwd(void)
 {
@@ -145,7 +145,7 @@ void toFwd(void)
 
 #endif
 	deviceStatic = Forward;
-	while (IsLimitBack())//�ȴ���λ����
+	while (IsLimitBack())//等待限位消除
 	{
 #if EN_WDR==1
 		_WDR();
@@ -184,7 +184,7 @@ void toBack(void)
 #endif
 	deviceStatic = Back;
 
-	while (IsLimitForward())//�ȴ���λ����
+	while (IsLimitForward())//等待限位消除
 	{
 #if EN_WDR==1
 		_WDR();
@@ -224,14 +224,14 @@ extern void toStop(void)
 #endif
 
 	// waring:
-	delay_ms(500);//��ֹ����Ƶ��ͨ��
+	delay_ms(500);//防止触点频繁通断
 	return;
 }
 extern void toOrign(void)
 {
 	ACK();
 	toBack();
-	//���������е���λ�����������
+	//由主程序中的限位决定归零结束
 	return;
 }
 
@@ -251,7 +251,7 @@ extern void savePosition(void)
 	eepromWrite(0x01, tempPosition);
 	eepromWrite(0, 0x00);
 	eepromWrite(256, 0x00);
-	eepromWrite(511, 0x00);//waring:511��not 512
+	eepromWrite(511, 0x00);//waring:511，not 512
 	onceBeep();
 	return;
 }
@@ -268,7 +268,7 @@ extern u32 getPositionInMemory(void)
 	{
 		goto END;
 	}
-	if (eepromRead(511) != 0x00)//ע�⣺��511����512
+	if (eepromRead(511) != 0x00)//注意：是511，非512
 	{
 		goto END;
 	}

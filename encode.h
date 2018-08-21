@@ -5,7 +5,7 @@
 
 
 /*!
-* @brief:  ³õÊ¼»¯£¬ÅäÖÃÖĞ¶ÏµÈ
+* @brief:  åˆå§‹åŒ–ï¼Œé…ç½®ä¸­æ–­ç­‰
 */ 
 extern void encodeInit(void);
 

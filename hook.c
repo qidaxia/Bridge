@@ -54,7 +54,7 @@ extern u8 IsRunWithTarget(void)
 {
 	if (cmdFlag.flag_runWithTar)
 	{
-		//cmdFlag.flag_runWithTar = FALSE;//Ö÷Ñ­»·ÖĞ»»ĞèÒª½øÈë¼ì²â
+		//cmdFlag.flag_runWithTar = FALSE;//ä¸»å¾ªç¯ä¸­æ¢éœ€è¦è¿›å…¥æ£€æµ‹
 		return TRUE;
 	}
 	return FALSE;
